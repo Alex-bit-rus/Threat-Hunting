@@ -48,26 +48,26 @@ alexkondrol@yandex.ru
 
 ### 1. Установить интерпретатор R
 
-![](img/img1.png)
+![](images/clipboard-1739388512.png)
 
 ### 2. Установить Rstudio IDE
 
 Для этого воспользуемся инструкцией с [ALT Linux
 Wiki](https://www.altlinux.org/index.php?search=RStudio&title=Служебная%3AПоиск&wprov=acrw1)
 
-![](img/img2.png)
+![](images/clipboard-2560445461.png)
 
 В результате мы получили директория с файлами Rstudio:
 
-![](img/img3.png)
+<img src="images/clipboard-3539320649.png" width="623" />
 
 ### 3. Установить программный пакет swirl:
 
 Установку выполнить через интерфейс Rstudio IDE
 
-<img src="img/img4.png" width="509" />
+<img src="images/clipboard-147426846.png" width="509" />
 
-![](img/img5.png)
+![](images/clipboard-410341681.png)
 
 ### 4. Запустить задание с помощью swirl::swirl()
 
