@@ -1,7 +1,7 @@
 # Введение в R
 alexkondrol@yandex.ru
 
-# Практическая работа №1
+# Практическая работа № 3
 
 ## Цель работы
 
@@ -398,3 +398,8 @@ flights |> left_join(airlines, by = "carrier") |> filter(arr_delay > 0, year == 
 ```
 
     [1] "ExpressJet Airlines Inc."
+
+## Вывод
+
+В ходе практической работы я развил навыки работы с языком
+программирования R

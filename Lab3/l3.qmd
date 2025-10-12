@@ -6,7 +6,7 @@ format:
     output-file: README.md
 ---
 
-# Практическая работа №1
+# Практическая работа № 3
 
 ## Цель работы
 
@@ -243,3 +243,7 @@ flights |> filter(month == 6) |> left_join(airlines, by = "carrier") |> group_by
 ```{r}
 flights |> left_join(airlines, by = "carrier") |> filter(arr_delay > 0, year == 2013) |> group_by(name) |> summarise(amount = n(), .groups = "drop") |> slice_max(amount, n = 1, with_ties = FALSE) |> pull(name)
 ```
+
+## Вывод
+
+В ходе практической работы я развил навыки работы с языком программирования R
