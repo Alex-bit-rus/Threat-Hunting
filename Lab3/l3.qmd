@@ -1,12 +1,10 @@
 ---
-title: "Введение в R"
+title: "Основы обработки данных с помощью R и Dplyr"
 author: "alexkondrol@yandex.ru"
 format: 
   md:
     output-file: README.md
 ---
-
-# Практическая работа № 3
 
 ## Цель работы
 
