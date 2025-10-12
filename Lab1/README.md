@@ -61,6 +61,60 @@ Wiki](https://www.altlinux.org/index.php?search=RStudio&title=Служебная
 
 ![](img/img3.png)
 
+``` r
+sessionInfo()
+```
+
+    R version 4.5.0 (2025-04-11)
+    Platform: x86_64-alt-linux-gnu
+    Running under: ALT Workstation 11.1 (Prometheus)
+
+    Matrix products: default
+    BLAS:   /usr/lib64/libopenblasp-r0.3.27.so 
+    LAPACK: /usr/lib64/liblapack.so.4;  LAPACK version 3.8.0
+
+    locale:
+     [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+     [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+     [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+     [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+     [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+    [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+    time zone: Europe/Moscow
+    tzcode source: system (glibc)
+
+    attached base packages:
+    [1] stats     graphics  grDevices utils     datasets  methods   base     
+
+    loaded via a namespace (and not attached):
+     [1] compiler_4.5.0    fastmap_1.2.0     cli_3.6.5         tools_4.5.0      
+     [5] htmltools_0.5.8.1 yaml_2.3.10       rmarkdown_2.30    knitr_1.50       
+     [9] jsonlite_2.0.0    xfun_0.53         digest_0.6.37     rlang_1.1.6      
+    [13] evaluate_1.0.5   
+
+    R version 4.5.0 (2025-04-11)
+    Platform: x86_64-alt-linux-gnu
+    Running under: ALT Workstation 11.1 (Prometheus)
+
+    Matrix products: default
+    BLAS:   /usr/lib64/libopenblasp-r0.3.27.so 
+    LAPACK: /usr/lib64/liblapack.so.4;  LAPACK version 3.8.0
+
+    locale:
+     [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+     [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8    LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+     [9] LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+    time zone: Europe/Moscow
+    tzcode source: system (glibc)
+
+    attached base packages:
+    [1] stats     graphics  grDevices utils     datasets  methods   base     
+
+    loaded via a namespace (and not attached):
+    [1] compiler_4.5.0 tools_4.5.0   
+
 ### 3. Установить программный пакет swirl:
 
 Установку выполнить через интерфейс Rstudio IDE
