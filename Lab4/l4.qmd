@@ -151,9 +151,13 @@ internal / (internal + external)
 #### Найдите топ-10 участников сети, проявляющих наибольшую сетевую активность.
 
 ```{r}
-top10_participants <- dns_data %>%
-  select(id.orig_h, id.resp_h) %>%
-  pivot_longer(everything(), names_to = "role", values_to = "ip") %>%
+library(dplyr)
+top10_participants <- bind_rows(
+  dns_data %>%
+    select(ip = id.orig_h),
+  dns_data %>%
+    select(ip = id.resp_h)
+) %>%
   filter(!is.na(ip), ip != "-") %>%
   count(ip, name = "events") %>%
   arrange(desc(events)) %>%
@@ -161,3 +165,100 @@ top10_participants <- dns_data %>%
 
 top10_participants
 ```
+
+#### Найдите топ-10 доменов, к которым обращаются пользователи сети и соответственное количество обращений
+
+```{r}
+top10_domains <- dns_data %>%
+  filter(!is.na(query), query != "-", query != "") %>%
+  count(query, name = "hits") %>%
+  arrange(desc(hits)) %>%
+  slice_head(n = 10)
+
+top10_domains
+```
+
+#### Опеределите базовые статистические характеристики (функция summary() ) интервала времени между последовательными обращениями к топ-10 доменам.
+
+Сейчас мы берём каждый из топ-10 доменов, вычисляем разницу между соседними обращениями (diff(ts)), и запускаем summary:
+
+```{r}
+top10_queries <- top10_domains$query
+
+dns_intervals <- dns_data %>%
+  filter(query %in% top10_queries) %>%
+  arrange(query, ts) %>%          # сортировка по домену и времени
+  group_by(query) %>%
+  mutate(
+    interval_sec = as.numeric(ts - lag(ts), units = "secs")
+  ) %>%
+  ungroup()
+```
+
+```{r}
+interval_summary_raw <- dns_intervals %>%
+  group_by(query) %>%
+  summarise(
+    summary_stats = list(summary(interval_sec))
+  )
+
+interval_summary_raw$summary_stats[[1]]
+interval_summary_raw$query[1]
+
+```
+
+#### Поиск возможного скрытого DNS-канала
+
+```{r}
+periodic_suspects <- dns_data %>%
+  filter(!is.na(query), query != "-") %>%
+  arrange(query, ts) %>%
+  group_by(query) %>%
+  mutate(
+    interval = as.numeric(ts - lag(ts), units = "secs")
+  ) %>%
+  summarise(
+    mean_interval = mean(interval, na.rm = TRUE),
+    sd_interval   = sd(interval, na.rm = TRUE),
+    n             = sum(!is.na(interval))
+  ) %>%
+  filter(n > 20, sd_interval < 1)
+
+periodic_suspects
+
+```
+
+В ходе анализа интервалов между DNS-запросами были обнаружены 7 доменов, обращения к которым происходят с высокой регулярностью (низкое стандартное отклонение интервала). Такая периодичность характерна для автоматических процессов и в ряде случаев — для скрытых каналов управления вредоносного ПО.
+
+Наиболее подозрительными выглядят домены `hq.h` и `httphq.hec.net`, генерирующие сотни обращений с интервалами порядка миллисекунд. Домен `input.mozilla.com` демонстрирует идеальную периодичность в 5 секунд, что похоже на сбор телеметрии с браузера.
+
+### Обогащение данных
+
+#### Определить местоположение и организацию-провайдера для топ-10 доменов
+
+```{r}
+library(httr)
+library(jsonlite)
+
+resolve_domain_info <- function(domain) {
+  url <- paste0("http://ip-api.com/json/", domain)
+  response <- httr::GET(url)
+  data <- jsonlite::fromJSON(rawToChar(response$content))
+  tibble(
+    domain = domain,
+    country = data$country,
+    city = data$city,
+    isp = data$isp,
+    org = data$org,
+    as = data$as
+  )
+}
+
+enriched_domains <- purrr::map_df(top10_domains$query, resolve_domain_info)
+
+enriched_domains
+```
+
+## Вывод
+
+В ходе практической работы я развил навыки работы с языком программирования R, а также научился анализировать DNS логи

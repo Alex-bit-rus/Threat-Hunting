@@ -29,7 +29,7 @@ format:
 
 Импортируем пакет `dplyr`, чтобы использовать набор данных `starwars` из него не обращаясь к нему каждый раз
 
-``` r
+```{r}
 library("dplyr")
 ```
 
@@ -37,7 +37,7 @@ library("dplyr")
 
 Для выведем датафрейм `starwars`:
 
-``` r
+```{r}
 starwars
 ```
 
@@ -49,23 +49,21 @@ starwars
 
 #### 1. Сколько строк в датафрейме?
 
-``` r
+```{r}
 starwars %>% nrow()
 ```
 
-**Вывод:** 87
 
 #### 2. Сколько столбцов в датафрейме?
 
-``` r
+```{r}
 starwars %>% ncol()
 ```
 
-**Вывод:** 14
 
 #### 3. Как просмотреть примерный вид датафрейма?
 
-``` r
+```{r}
 starwars %>% glimpse()
 ```
 
@@ -75,160 +73,35 @@ starwars %>% glimpse()
 
 #### 4. Сколько уникальных рас персонажей (species) представлено в данных?
 
-``` r
+```{r}
 starwars["species"] %>% unique() %>% nrow() 
 ```
 
-**Вывод:** 38
-
 #### 5. Найти самого высокого персонажа
 
-``` r
+```{r}
 starwars %>% filter(height == max(height, na.rm = TRUE)) %>% 
     select(name, height, species)
 ```
 
-**Вывод:**
-
-| name        | height | species  |
-|:------------|-------:|:---------|
-| Yarael Poof |    264 | Quermian |
 
 #### 6. Найти всех персонажей ниже 170
 
-``` r
+```{r}
 starwars %>% filter(height < 170) %>% select(name, height)
 ```
 
-**Вывод:**
-
-| name                  | height |
-|:----------------------|-------:|
-| C-3PO                 |    167 |
-| R2-D2                 |     96 |
-| Leia Organa           |    150 |
-| Beru Whitesun Lars    |    165 |
-| R5-D4                 |     97 |
-| Yoda                  |     66 |
-| Mon Mothma            |    150 |
-| Wicket Systri Warrick |     88 |
-| Nien Nunb             |    160 |
-| Watto                 |    137 |
-| Sebulba               |    112 |
-| Shmi Skywalker        |    163 |
-| Ratts Tyerel          |     79 |
-| Dud Bolt              |     94 |
-| Gasgano               |    122 |
-| Ben Quadinaros        |    163 |
-| Cordé                 |    157 |
-| Barriss Offee         |    166 |
-| Dormé                 |    165 |
-| Zam Wesell            |    168 |
-| Jocasta Nu            |    167 |
-| R4-P17                |     96 |
 
 #### 7. Подсчитать ИМТ (индекс массы тела) для всех персонажей. ИМТ подсчитать по формуле
 
-``` r
+```{r}
 starwars <- starwars %>% mutate(IMT = mass / ( (height / 100) ^ 2 ))
 starwars 
 ```
 
-**Вывод:**
-
-| name | height | mass | hair_color | skin_color | eye_color | birth_year | sex | gender | homeworld | species | films | vehicles | starships | IMT |
-|:----|----:|----:|:----|:----|:----|----:|:----|:----|:----|:----|:---------|:----|:----|----:|
-| Luke Skywalker | 172 | 77.0 | blond | fair | blue | 19.0 | male | masculine | Tatooine | Human | A New Hope , The Empire Strikes Back, Return of the Jedi , Revenge of the Sith , The Force Awakens | Snowspeeder , Imperial Speeder Bike | X-wing , Imperial shuttle | 26.02758 |
-| C-3PO | 167 | 75.0 | NA | gold | yellow | 112.0 | none | masculine | Tatooine | Droid | A New Hope , The Empire Strikes Back, Return of the Jedi , The Phantom Menace , Attack of the Clones , Revenge of the Sith |  |  | 26.89232 |
-| R2-D2 | 96 | 32.0 | NA | white, blue | red | 33.0 | none | masculine | Naboo | Droid | A New Hope , The Empire Strikes Back, Return of the Jedi , The Phantom Menace , Attack of the Clones , Revenge of the Sith , The Force Awakens |  |  | 34.72222 |
-| Darth Vader | 202 | 136.0 | none | white | yellow | 41.9 | male | masculine | Tatooine | Human | A New Hope , The Empire Strikes Back, Return of the Jedi , Revenge of the Sith |  | TIE Advanced x1 | 33.33007 |
-| Leia Organa | 150 | 49.0 | brown | light | brown | 19.0 | female | feminine | Alderaan | Human | A New Hope , The Empire Strikes Back, Return of the Jedi , Revenge of the Sith , The Force Awakens | Imperial Speeder Bike |  | 21.77778 |
-| Owen Lars | 178 | 120.0 | brown, grey | light | blue | 52.0 | male | masculine | Tatooine | Human | A New Hope , Attack of the Clones, Revenge of the Sith |  |  | 37.87401 |
-| Beru Whitesun Lars | 165 | 75.0 | brown | light | blue | 47.0 | female | feminine | Tatooine | Human | A New Hope , Attack of the Clones, Revenge of the Sith |  |  | 27.54821 |
-| R5-D4 | 97 | 32.0 | NA | white, red | red | NA | none | masculine | Tatooine | Droid | A New Hope |  |  | 34.00999 |
-| Biggs Darklighter | 183 | 84.0 | black | light | brown | 24.0 | male | masculine | Tatooine | Human | A New Hope |  | X-wing | 25.08286 |
-| Obi-Wan Kenobi | 182 | 77.0 | auburn, white | fair | blue-gray | 57.0 | male | masculine | Stewjon | Human | A New Hope , The Empire Strikes Back, Return of the Jedi , The Phantom Menace , Attack of the Clones , Revenge of the Sith | Tribubble bongo | Jedi starfighter , Trade Federation cruiser, Naboo star skiff , Jedi Interceptor , Belbullab-22 starfighter | 23.24598 |
-| Anakin Skywalker | 188 | 84.0 | blond | fair | blue | 41.9 | male | masculine | Tatooine | Human | The Phantom Menace , Attack of the Clones, Revenge of the Sith | Zephyr-G swoop bike, XJ-6 airspeeder | Naboo fighter , Trade Federation cruiser, Jedi Interceptor | 23.76641 |
-| Wilhuff Tarkin | 180 | NA | auburn, grey | fair | blue | 64.0 | male | masculine | Eriadu | Human | A New Hope , Revenge of the Sith |  |  | NA |
-| Chewbacca | 228 | 112.0 | brown | unknown | blue | 200.0 | male | masculine | Kashyyyk | Wookiee | A New Hope , The Empire Strikes Back, Return of the Jedi , Revenge of the Sith , The Force Awakens | AT-ST | Millennium Falcon, Imperial shuttle | 21.54509 |
-| Han Solo | 180 | 80.0 | brown | fair | brown | 29.0 | male | masculine | Corellia | Human | A New Hope , The Empire Strikes Back, Return of the Jedi , The Force Awakens |  | Millennium Falcon, Imperial shuttle | 24.69136 |
-| Greedo | 173 | 74.0 | NA | green | black | 44.0 | male | masculine | Rodia | Rodian | A New Hope |  |  | 24.72518 |
-| Jabba Desilijic Tiure | 175 | 1358.0 | NA | green-tan, brown | orange | 600.0 | hermaphroditic | masculine | Nal Hutta | Hutt | A New Hope , Return of the Jedi, The Phantom Menace |  |  | 443.42857 |
-| Wedge Antilles | 170 | 77.0 | brown | fair | hazel | 21.0 | male | masculine | Corellia | Human | A New Hope , The Empire Strikes Back, Return of the Jedi | Snowspeeder | X-wing | 26.64360 |
-| Jek Tono Porkins | 180 | 110.0 | brown | fair | blue | NA | NA | NA | Bestine IV | NA | A New Hope |  | X-wing | 33.95062 |
-| Yoda | 66 | 17.0 | white | green | brown | 896.0 | male | masculine | NA | Yoda's species | The Empire Strikes Back, Return of the Jedi , The Phantom Menace , Attack of the Clones , Revenge of the Sith |  |  | 39.02663 |
-| Palpatine | 170 | 75.0 | grey | pale | yellow | 82.0 | male | masculine | Naboo | Human | The Empire Strikes Back, Return of the Jedi , The Phantom Menace , Attack of the Clones , Revenge of the Sith |  |  | 25.95156 |
-| Boba Fett | 183 | 78.2 | black | fair | brown | 31.5 | male | masculine | Kamino | Human | The Empire Strikes Back, Return of the Jedi , Attack of the Clones |  | Slave 1 | 23.35095 |
-| IG-88 | 200 | 140.0 | none | metal | red | 15.0 | none | masculine | NA | Droid | The Empire Strikes Back |  |  | 35.00000 |
-| Bossk | 190 | 113.0 | none | green | red | 53.0 | male | masculine | Trandosha | Trandoshan | The Empire Strikes Back |  |  | 31.30194 |
-| Lando Calrissian | 177 | 79.0 | black | dark | brown | 31.0 | male | masculine | Socorro | Human | The Empire Strikes Back, Return of the Jedi |  | Millennium Falcon | 25.21625 |
-| Lobot | 175 | 79.0 | none | light | blue | 37.0 | male | masculine | Bespin | Human | The Empire Strikes Back |  |  | 25.79592 |
-| Ackbar | 180 | 83.0 | none | brown mottle | orange | 41.0 | male | masculine | Mon Cala | Mon Calamari | Return of the Jedi, The Force Awakens |  |  | 25.61728 |
-| Mon Mothma | 150 | NA | auburn | fair | blue | 48.0 | female | feminine | Chandrila | Human | Return of the Jedi |  |  | NA |
-| Arvel Crynyd | NA | NA | brown | fair | brown | NA | male | masculine | NA | Human | Return of the Jedi |  | A-wing | NA |
-| Wicket Systri Warrick | 88 | 20.0 | brown | brown | brown | 8.0 | male | masculine | Endor | Ewok | Return of the Jedi |  |  | 25.82645 |
-| Nien Nunb | 160 | 68.0 | none | grey | black | NA | male | masculine | Sullust | Sullustan | Return of the Jedi |  | Millennium Falcon | 26.56250 |
-| Qui-Gon Jinn | 193 | 89.0 | brown | fair | blue | 92.0 | male | masculine | NA | Human | The Phantom Menace | Tribubble bongo |  | 23.89326 |
-| Nute Gunray | 191 | 90.0 | none | mottled green | red | NA | male | masculine | Cato Neimoidia | Neimodian | The Phantom Menace , Attack of the Clones, Revenge of the Sith |  |  | 24.67038 |
-| Finis Valorum | 170 | NA | blond | fair | blue | 91.0 | male | masculine | Coruscant | Human | The Phantom Menace |  |  | NA |
-| Padmé Amidala | 185 | 45.0 | brown | light | brown | 46.0 | female | feminine | Naboo | Human | The Phantom Menace , Attack of the Clones, Revenge of the Sith |  | Naboo fighter , H-type Nubian yacht, Naboo star skiff | 13.14828 |
-| Jar Jar Binks | 196 | 66.0 | none | orange | orange | 52.0 | male | masculine | Naboo | Gungan | The Phantom Menace , Attack of the Clones |  |  | 17.18034 |
-| Roos Tarpals | 224 | 82.0 | none | grey | orange | NA | male | masculine | Naboo | Gungan | The Phantom Menace |  |  | 16.34247 |
-| Rugor Nass | 206 | NA | none | green | orange | NA | male | masculine | Naboo | Gungan | The Phantom Menace |  |  | NA |
-| Ric Olié | 183 | NA | brown | fair | blue | NA | male | masculine | Naboo | Human | The Phantom Menace |  | Naboo Royal Starship | NA |
-| Watto | 137 | NA | black | blue, grey | yellow | NA | male | masculine | Toydaria | Toydarian | The Phantom Menace , Attack of the Clones |  |  | NA |
-| Sebulba | 112 | 40.0 | none | grey, red | orange | NA | male | masculine | Malastare | Dug | The Phantom Menace |  |  | 31.88776 |
-| Quarsh Panaka | 183 | NA | black | dark | brown | 62.0 | male | masculine | Naboo | Human | The Phantom Menace |  |  | NA |
-| Shmi Skywalker | 163 | NA | black | fair | brown | 72.0 | female | feminine | Tatooine | Human | The Phantom Menace , Attack of the Clones |  |  | NA |
-| Darth Maul | 175 | 80.0 | none | red | yellow | 54.0 | male | masculine | Dathomir | Zabrak | The Phantom Menace | Sith speeder | Scimitar | 26.12245 |
-| Bib Fortuna | 180 | NA | none | pale | pink | NA | male | masculine | Ryloth | Twi'lek | Return of the Jedi |  |  | NA |
-| Ayla Secura | 178 | 55.0 | none | blue | hazel | 48.0 | female | feminine | Ryloth | Twi'lek | The Phantom Menace , Attack of the Clones, Revenge of the Sith |  |  | 17.35892 |
-| Ratts Tyerel | 79 | 15.0 | none | grey, blue | unknown | NA | male | masculine | Aleen Minor | Aleena | The Phantom Menace |  |  | 24.03461 |
-| Dud Bolt | 94 | 45.0 | none | blue, grey | yellow | NA | male | masculine | Vulpter | Vulptereen | The Phantom Menace |  |  | 50.92802 |
-| Gasgano | 122 | NA | none | white, blue | black | NA | male | masculine | Troiken | Xexto | The Phantom Menace |  |  | NA |
-| Ben Quadinaros | 163 | 65.0 | none | grey, green, yellow | orange | NA | male | masculine | Tund | Toong | The Phantom Menace |  |  | 24.46460 |
-| Mace Windu | 188 | 84.0 | none | dark | brown | 72.0 | male | masculine | Haruun Kal | Human | The Phantom Menace , Attack of the Clones, Revenge of the Sith |  |  | 23.76641 |
-| Ki-Adi-Mundi | 198 | 82.0 | white | pale | yellow | 92.0 | male | masculine | Cerea | Cerean | The Phantom Menace , Attack of the Clones, Revenge of the Sith |  |  | 20.91623 |
-| Kit Fisto | 196 | 87.0 | none | green | black | NA | male | masculine | Glee Anselm | Nautolan | The Phantom Menace , Attack of the Clones, Revenge of the Sith |  |  | 22.64681 |
-| Eeth Koth | 171 | NA | black | brown | brown | NA | male | masculine | Iridonia | Zabrak | The Phantom Menace , Revenge of the Sith |  |  | NA |
-| Adi Gallia | 184 | 50.0 | none | dark | blue | NA | female | feminine | Coruscant | Tholothian | The Phantom Menace , Revenge of the Sith |  |  | 14.76843 |
-| Saesee Tiin | 188 | NA | none | pale | orange | NA | male | masculine | Iktotch | Iktotchi | The Phantom Menace , Revenge of the Sith |  |  | NA |
-| Yarael Poof | 264 | NA | none | white | yellow | NA | male | masculine | Quermia | Quermian | The Phantom Menace |  |  | NA |
-| Plo Koon | 188 | 80.0 | none | orange | black | 22.0 | male | masculine | Dorin | Kel Dor | The Phantom Menace , Attack of the Clones, Revenge of the Sith |  | Jedi starfighter | 22.63468 |
-| Mas Amedda | 196 | NA | none | blue | blue | NA | male | masculine | Champala | Chagrian | The Phantom Menace , Attack of the Clones |  |  | NA |
-| Gregar Typho | 185 | 85.0 | black | dark | brown | NA | NA | NA | Naboo | NA | Attack of the Clones |  | Naboo fighter | 24.83565 |
-| Cordé | 157 | NA | brown | light | brown | NA | NA | NA | Naboo | NA | Attack of the Clones |  |  | NA |
-| Cliegg Lars | 183 | NA | brown | fair | blue | 82.0 | male | masculine | Tatooine | Human | Attack of the Clones |  |  | NA |
-| Poggle the Lesser | 183 | 80.0 | none | green | yellow | NA | male | masculine | Geonosis | Geonosian | Attack of the Clones, Revenge of the Sith |  |  | 23.88844 |
-| Luminara Unduli | 170 | 56.2 | black | yellow | blue | 58.0 | female | feminine | Mirial | Mirialan | Attack of the Clones, Revenge of the Sith |  |  | 19.44637 |
-| Barriss Offee | 166 | 50.0 | black | yellow | blue | 40.0 | female | feminine | Mirial | Mirialan | Attack of the Clones |  |  | 18.14487 |
-| Dormé | 165 | NA | brown | light | brown | NA | female | feminine | Naboo | Human | Attack of the Clones |  |  | NA |
-| Dooku | 193 | 80.0 | white | fair | brown | 102.0 | male | masculine | Serenno | Human | Attack of the Clones, Revenge of the Sith | Flitknot speeder |  | 21.47709 |
-| Bail Prestor Organa | 191 | NA | black | tan | brown | 67.0 | male | masculine | Alderaan | Human | Attack of the Clones, Revenge of the Sith |  |  | NA |
-| Jango Fett | 183 | 79.0 | black | tan | brown | 66.0 | male | masculine | Concord Dawn | Human | Attack of the Clones |  |  | 23.58984 |
-| Zam Wesell | 168 | 55.0 | blonde | fair, green, yellow | yellow | NA | female | feminine | Zolan | Clawdite | Attack of the Clones | Koro-2 Exodrive airspeeder |  | 19.48696 |
-| Dexter Jettster | 198 | 102.0 | none | brown | yellow | NA | male | masculine | Ojom | Besalisk | Attack of the Clones |  |  | 26.01775 |
-| Lama Su | 229 | 88.0 | none | grey | black | NA | male | masculine | Kamino | Kaminoan | Attack of the Clones |  |  | 16.78076 |
-| Taun We | 213 | NA | none | grey | black | NA | female | feminine | Kamino | Kaminoan | Attack of the Clones |  |  | NA |
-| Jocasta Nu | 167 | NA | white | fair | blue | NA | female | feminine | Coruscant | Human | Attack of the Clones |  |  | NA |
-| R4-P17 | 96 | NA | none | silver, red | red, blue | NA | none | feminine | NA | Droid | Attack of the Clones, Revenge of the Sith |  |  | NA |
-| Wat Tambor | 193 | 48.0 | none | green, grey | unknown | NA | male | masculine | Skako | Skakoan | Attack of the Clones |  |  | 12.88625 |
-| San Hill | 191 | NA | none | grey | gold | NA | male | masculine | Muunilinst | Muun | Attack of the Clones |  |  | NA |
-| Shaak Ti | 178 | 57.0 | none | red, blue, white | black | NA | female | feminine | Shili | Togruta | Attack of the Clones, Revenge of the Sith |  |  | 17.99015 |
-| Grievous | 216 | 159.0 | none | brown, white | green, yellow | NA | male | masculine | Kalee | Kaleesh | Revenge of the Sith | Tsmeu-6 personal wheel bike | Belbullab-22 starfighter | 34.07922 |
-| Tarfful | 234 | 136.0 | brown | brown | blue | NA | male | masculine | Kashyyyk | Wookiee | Revenge of the Sith |  |  | 24.83746 |
-| Raymus Antilles | 188 | 79.0 | brown | light | brown | NA | male | masculine | Alderaan | Human | A New Hope , Revenge of the Sith |  |  | 22.35174 |
-| Sly Moore | 178 | 48.0 | none | pale | white | NA | NA | NA | Umbara | NA | Attack of the Clones, Revenge of the Sith |  |  | 15.14960 |
-| Tion Medon | 206 | 80.0 | none | grey | black | NA | male | masculine | Utapau | Pau'an | Revenge of the Sith |  |  | 18.85192 |
-| Finn | NA | NA | black | dark | dark | NA | male | masculine | NA | Human | The Force Awakens |  |  | NA |
-| Rey | NA | NA | brown | light | hazel | NA | female | feminine | NA | Human | The Force Awakens |  |  | NA |
-| Poe Dameron | NA | NA | brown | light | brown | NA | male | masculine | NA | Human | The Force Awakens |  | X-wing | NA |
-| BB8 | NA | NA | none | none | black | NA | none | masculine | NA | Droid | The Force Awakens |  |  | NA |
-| Captain Phasma | NA | NA | none | none | unknown | NA | female | feminine | NA | Human | The Force Awakens |  |  | NA |
-
 #### 8. Найти 10 самых “вытянутых” персонажей. “Вытянутость” оценить по отношению массы (mass) к росту (height) персонажей
 
-``` r
+```{r}
 top10_stretched <- starwars %>%
   mutate(stretch = mass / (height / 100)) %>% 
   filter(is.finite(stretch)) %>% 
@@ -239,24 +112,9 @@ top10_stretched <- starwars %>%
 top10_stretched
 ```
 
-**Вывод:**
-
-| name                  | species    | height | mass |   stretch |
-|:----------------------|:-----------|-------:|-----:|----------:|
-| Jabba Desilijic Tiure | Hutt       |    175 | 1358 | 776.00000 |
-| Grievous              | Kaleesh    |    216 |  159 |  73.61111 |
-| IG-88                 | Droid      |    200 |  140 |  70.00000 |
-| Owen Lars             | Human      |    178 |  120 |  67.41573 |
-| Darth Vader           | Human      |    202 |  136 |  67.32673 |
-| Jek Tono Porkins      | NA         |    180 |  110 |  61.11111 |
-| Bossk                 | Trandoshan |    190 |  113 |  59.47368 |
-| Tarfful               | Wookiee    |    234 |  136 |  58.11966 |
-| Dexter Jettster       | Besalisk   |    198 |  102 |  51.51515 |
-| Chewbacca             | Wookiee    |    228 |  112 |  49.12281 |
-
 #### 9. Найти средний возраст персонажей каждой расы вселенной Звездных войн.
 
-``` r
+```{r}
 starwars %>%
   filter(!is.na(species), !is.na(birth_year)) %>%
   group_by(species) %>%
@@ -264,43 +122,19 @@ starwars %>%
   arrange(desc(avg_age)) 
 ```
 
-**Вывод:**
-
-| species        |   avg_age |
-|:---------------|----------:|
-| Yoda's species | 896.00000 |
-| Hutt           | 600.00000 |
-| Wookiee        | 200.00000 |
-| Cerean         |  92.00000 |
-| Zabrak         |  54.00000 |
-| Human          |  53.74231 |
-| Droid          |  53.33333 |
-| Trandoshan     |  53.00000 |
-| Gungan         |  52.00000 |
-| Mirialan       |  49.00000 |
-| Twi'lek        |  48.00000 |
-| Rodian         |  44.00000 |
-| Mon Calamari   |  41.00000 |
-| Kel Dor        |  22.00000 |
-| Ewok           |   8.00000 |
 
 #### 10. Найти самый распространенный цвет глаз персонажей вселенной Звездных войн.
 
-``` r
+```{r}
 starwars %>%
   count(eye_color, sort = TRUE) %>%
   slice_head(n = 1) |> knitr::kable(format='markdown')
 ```
 
-**Вывод:**
-
-| eye_color |   n |
-|:----------|----:|
-| brown     |  21 |
 
 #### 11. Подсчитать среднюю длину имени в каждой расе вселенной Звездных войн
 
-``` r
+```{r}
 starwars %>%
   filter(!is.na(species), !is.na(name)) %>%
   mutate(name_length = nchar(name)) %>%
@@ -311,48 +145,6 @@ starwars %>%
   ) %>%
   arrange(desc(avg_name_length)) 
 ```
-
-**Вывод:**
-
-| species        | avg_name_length |   n |
-|:---------------|----------------:|----:|
-| Ewok           |            21.0 |   1 |
-| Hutt           |            21.0 |   1 |
-| Geonosian      |            17.0 |   1 |
-| Besalisk       |            15.0 |   1 |
-| Mirialan       |            14.0 |   2 |
-| Toong          |            14.0 |   1 |
-| Aleena         |            12.0 |   1 |
-| Cerean         |            12.0 |   1 |
-| Gungan         |            11.7 |   3 |
-| Human          |            11.3 |  35 |
-| Iktotchi       |            11.0 |   1 |
-| Neimodian      |            11.0 |   1 |
-| Quermian       |            11.0 |   1 |
-| Twi'lek        |            11.0 |   2 |
-| Chagrian       |            10.0 |   1 |
-| Clawdite       |            10.0 |   1 |
-| Pau'an         |            10.0 |   1 |
-| Skakoan        |            10.0 |   1 |
-| Tholothian     |            10.0 |   1 |
-| Zabrak         |             9.5 |   2 |
-| Nautolan       |             9.0 |   1 |
-| Sullustan      |             9.0 |   1 |
-| Kaleesh        |             8.0 |   1 |
-| Kel Dor        |             8.0 |   1 |
-| Muun           |             8.0 |   1 |
-| Togruta        |             8.0 |   1 |
-| Vulptereen     |             8.0 |   1 |
-| Wookiee        |             8.0 |   2 |
-| Dug            |             7.0 |   1 |
-| Kaminoan       |             7.0 |   2 |
-| Xexto          |             7.0 |   1 |
-| Mon Calamari   |             6.0 |   1 |
-| Rodian         |             6.0 |   1 |
-| Toydarian      |             5.0 |   1 |
-| Trandoshan     |             5.0 |   1 |
-| Droid          |             4.8 |   6 |
-| Yoda's species |             4.0 |   1 |
 
 ## Оценка результатов
 
