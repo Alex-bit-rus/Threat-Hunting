@@ -152,8 +152,8 @@ alexkondrol@yandex.ru
 
 ![](img/img17.png)
 
-Ссылка на готовый дашборд:
-https://datalens.ru/r7s283p22k40c-analiz-setevogo-trafika-alexkondrol
+[Ссылка на готовый дашборд](https://datalens.ru/r7s283p22k40c-analiz-setevogo-trafika-alexkondrol)
+
 
 ## Выводы
 
