@@ -1,4 +1,5 @@
-# Использование технологии Yandex DataLens для анализа данных сетевой активности
+# Использование технологии Yandex DataLens для анализа данных сетевой
+активности
 alexkondrol@yandex.ru
 
 ## Цель работы
@@ -16,17 +17,18 @@ alexkondrol@yandex.ru
 
 1.  Операционная система GNU/Linux
 2.  Данные сетевой активности в корпративной сети компании XYZ, которых
-    хранятся в `Yandex Object Storage`, в виде таблицы с следующей схемой:
+    хранятся в `Yandex Object Storage`, в виде таблицы с следующей
+    схемой:
 
-```         
-SCHEMA=(
-timestamp TIMESTAMP NOT NULL,
-src STRING,
-dst STRING,
-port INT32,
-bytes INT32
-)
-```
+<!-- -->
+
+    SCHEMA=(
+    timestamp TIMESTAMP NOT NULL,
+    src STRING,
+    dst STRING,
+    port INT32,
+    bytes INT32
+    )
 
 ## Задание
 
@@ -150,8 +152,11 @@ bytes INT32
 
 ![](img/img17.png)
 
+Ссылка на готовый дашборд:
+https://datalens.ru/r7s283p22k40c-analiz-setevogo-trafika-alexkondrol
+
 ## Выводы
 
 В ходе практической работы я научился работать с сервисом
 `Yandex DataLens`, делать чарты и составлять из них дашборд. Понял
-насколь важно средства observability и для мониторинга.
+насколько важны средства observability для мониторинга.

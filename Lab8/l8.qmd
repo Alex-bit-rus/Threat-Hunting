@@ -139,6 +139,8 @@ bytes INT32
 
 ![](img/img17.png)
 
+Ссылка на готовый дашборд: https://datalens.ru/r7s283p22k40c-analiz-setevogo-trafika-alexkondrol
+
 ## Выводы
 
 В ходе практической работы я научился работать с сервисом `Yandex DataLens`, делать чарты и составлять из них дашборд. Понял насколько важны средства observability для мониторинга.
