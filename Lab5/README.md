@@ -141,37 +141,35 @@ head(clients, 2)
 ``` r
 names(wifi_ap) <- trimws(names(wifi_ap))
 
-wifi_ap_clean <-  wifi_ap %>%
-  rename(
-    bssid       = BSSID,
-    first_seen  = `First time seen`,
-    last_seen   = `Last time seen`,
-    channel     = channel,
-    speed       = Speed,
-    privacy     = Privacy,
-    cipher      = Cipher,
-    auth        = Authentication,
-    power       = Power,
-    beacons     = `# beacons`,
-    iv_count    = `# IV`,
-    lan_ip      = `LAN IP`,
-    id_length   = `ID-length`,
-    essid       = ESSID,
-    key         = Key
-  ) %>%
-
-mutate(across(where(is.character), ~trimws(.))) %>%
-  mutate(
-    first_seen = as.POSIXct(first_seen, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
-    last_seen  = as.POSIXct(last_seen,  format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
-    channel    = as.numeric(channel),
-    speed      = as.numeric(speed),
-    power      = as.numeric(power),
-    beacons    = as.numeric(beacons),
-    iv_count   = as.numeric(iv_count),
-    id_length  = as.numeric(id_length)
-  ) %>%
-  tibble::as_tibble()
+wifi_ap_clean <- wifi_ap %>%
+rename(
+bssid      = BSSID,
+first_seen = `First time seen`,
+last_seen  = `Last time seen`,
+channel    = channel,
+speed      = Speed,
+privacy    = Privacy,
+cipher     = Cipher,
+auth       = Authentication,
+power      = Power,
+beacons    = `# beacons`,
+iv_count   = `# IV`,
+lan_ip     = `LAN IP`,
+id_length  = `ID-length`,
+essid      = ESSID,
+key        = Key
+) %>%
+mutate(across(where(is.character), ~ trimws(.))) %>%
+mutate(
+first_seen = as.POSIXct(first_seen, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
+last_seen  = as.POSIXct(last_seen,  format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
+channel    = as.numeric(channel),
+speed      = as.numeric(speed),
+power      = as.numeric(power),
+beacons    = as.numeric(beacons),
+iv_count   = as.numeric(iv_count),
+id_length  = as.numeric(id_length)
+)
 ```
 
 Проделаем аналагичную операцию с клиентами:
@@ -180,29 +178,28 @@ mutate(across(where(is.character), ~trimws(.))) %>%
 names(clients) <- trimws(names(clients))
 
 wifi_clients_clean <- clients %>%
-  rename(
-    station_mac   = `Station MAC`,
-    first_seen    = `First time seen`,
-    last_seen     = `Last time seen`,
-    power         = Power,
-    packets       = `# packets`,
-    bssid         = BSSID,
-    probed_essids = `Probed ESSIDs`
-  ) %>%
-  mutate(across(where(is.character), ~ trimws(.))) %>%
-  mutate(
-    first_seen = as.POSIXct(first_seen, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
-    last_seen  = as.POSIXct(last_seen,  format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
-    power      = as.numeric(power),
-    packets    = as.numeric(packets),
-    station_mac = toupper(station_mac),
-    bssid = case_when(
-      is.na(bssid) ~ NA_character_,
-      grepl("(?i)<?not associated>?", bssid) ~ NA_character_,
-      TRUE ~ toupper(bssid)
-    )
-  ) %>%
-  tibble::as_tibble()
+rename(
+station_mac   = `Station MAC`,
+first_seen    = `First time seen`,
+last_seen     = `Last time seen`,
+power         = Power,
+packets       = `# packets`,
+bssid         = BSSID,
+probed_essids = `Probed ESSIDs`
+) %>%
+mutate(across(where(is.character), ~ trimws(.))) %>%
+mutate(
+first_seen = as.POSIXct(first_seen, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
+last_seen  = as.POSIXct(last_seen,  format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
+power      = as.numeric(power),
+packets    = as.numeric(packets),
+station_mac = toupper(station_mac),
+bssid = case_when(
+is.na(bssid) ~ NA_character_,
+grepl("not associated", bssid, ignore.case = TRUE) ~ NA_character_,
+TRUE ~ toupper(bssid)
+)
+)
 ```
 
 Теперь посмотрим общую структуру файлов:
@@ -270,95 +267,81 @@ wifi_ap_clean %>% filter(privacy == "OPN")
 
 ### 2. Определить производителя для каждого обнаруженного устройства
 
-Будем определять производиля по MAC-адресу устройства, для этого
-обратимся к официальным данным IEEE
+Для определения производителя будем использовать `manuf.txt` - это
+стандартный справочник производителей, основанный на OUI-таблице
+Wireshark. Сделаем из него таблицу префиксов
 
 ``` r
-urls <- c(
-  "https://standards-oui.ieee.org/oui/oui.csv",
-  "https://standards-oui.ieee.org/oui28/mam.csv",
-  "https://standards-oui.ieee.org/oui36/oui36.csv"
+temp_dir <- tempdir()
+
+manuf_url  <- "https://raw.githubusercontent.com/observ3r/wobs/master/manuf.txt"
+manuf_file <- file.path(temp_dir, "manuf.txt")
+
+download.file(manuf_url, manuf_file, mode = "wb", quiet = TRUE)
+
+manuf_raw <- read.table(
+  manuf_file,
+  comment.char      = "#",
+  stringsAsFactors  = FALSE,
+  fill              = TRUE
 )
-files <- file.path(temp_dir, basename(urls))
 
-for (i in seq_along(urls)) {
-  download.file(urls[i], files[i], mode = "wb", quiet = TRUE)
-}
-
-oui_data <- readr::read_csv(files[1], show_col_types = FALSE)
-mam_data <- readr::read_csv(files[2], show_col_types = FALSE)
-mas_data <- readr::read_csv(files[3], show_col_types = FALSE)
+manuf_tbl <- manuf_raw %>%
+  transmute(
+    prefix6 = toupper(gsub(":", "", V1)), 
+    vendor  = V2
+  ) %>%
+  filter(nchar(prefix6) == 6, vendor != "") %>%
+  distinct()
 ```
 
-Напишем функцию, которая по MAC-адресу будет определять производителя
-устройства, опираясь на скачанные csv-таблицы, в каждой таблицы разная
-длина префикса MAC-адреса, которую компания арендует у IEEE.
+Напишем функцию для нормализации MAC-адреса:
 
 ``` r
 normalize_mac <- function(x) toupper(gsub("[^0-9A-F]", "", x))
-
-.vendor_cache <- new.env(parent = emptyenv())
-
-get_vendor <- function(mac) {
-  mac_clean <- normalize_mac(mac)
-  if (mac_clean == "" || is.na(mac_clean)) return(NA_character_)
-
-  if (!is.null(.vendor_cache[[mac_clean]])) {
-    return(.vendor_cache[[mac_clean]])
-  }
-
-  prefixes <- c(
-    substr(mac_clean, 1, 9),  # /36
-    substr(mac_clean, 1, 7),  # /28
-    substr(mac_clean, 1, 6)   # /24
-  )
-
-  vendor <- NA_character_
-
-  pref36 <- prefixes[1]
-  if (!is.na(pref36) && nchar(pref36) == 9 && "Assignment" %in% names(mas_data)) {
-    idx <- grepl(pref36, mas_data$Assignment, fixed = TRUE)
-    if (any(idx)) {
-      vendor <- mas_data$`Organization Name`[which(idx)[1]]
-    }
-  }
-
-  if (is.na(vendor) || vendor == "") {
-    pref28 <- prefixes[2]
-    if (!is.na(pref28) && nchar(pref28) == 7 && "Assignment" %in% names(mam_data)) {
-      idx <- grepl(pref28, mam_data$Assignment, fixed = TRUE)
-      if (any(idx)) {
-        vendor <- mam_data$`Organization Name`[which(idx)[1]]
-      }
-    }
-  }
-
-  if (is.na(vendor) || vendor == "") {
-    pref24 <- prefixes[3]
-    if (!is.na(pref24) && nchar(pref24) == 6 && "Assignment" %in% names(oui_data)) {
-      idx <- grepl(pref24, oui_data$Assignment, fixed = TRUE)
-      if (any(idx)) {
-        vendor <- oui_data$`Organization Name`[which(idx)[1]]
-      }
-    }
-  }
-
-  if (is.na(vendor) || vendor == "") {
-    vendor <- NA_character_
-  }
-
-  .vendor_cache[[mac_clean]] <- vendor
-  vendor
-}
 ```
 
-Теперь добавим дополнительный столбец `company` в наш датасет точек
-доступа с использованием функции `get_vendor()`
+Добавим новый столбец `prefix6` в котором будет нормализованный MAC
+адрес: а потом сделаем left join с нашей таблицей производителей
 
 ``` r
 wifi_ap_clean <- wifi_ap_clean %>%
-  mutate(company = vapply(bssid, get_vendor, character(1)))
+  mutate(prefix6 = substr(normalize_mac(bssid), 1, 6)) %>%
+  left_join(manuf_tbl, by = "prefix6")
 ```
+
+Посмотрим какие компании мы смогли определить
+
+``` r
+wifi_ap_clean %>%
+  select(bssid, essid, vendor) %>%
+  filter(!is.na(vendor)) %>%
+  head(20)
+```
+
+    # A tibble: 20 × 3
+       bssid             essid   vendor  
+       <chr>             <chr>   <chr>   
+     1 1C:7E:E5:8E:B7:DE <NA>    D-LinkIn
+     2 00:25:00:FF:94:73 <NA>    Apple   
+     3 00:26:99:F2:7A:E2 GIVC    Cisco   
+     4 48:5B:39:F9:7A:48 <NA>    AsustekC
+     5 00:26:99:F2:7A:E1 IKB     Cisco   
+     6 00:26:99:BA:75:80 GIVC    Cisco   
+     7 00:23:EB:E3:81:F2 GIVC    Cisco   
+     8 00:23:EB:E3:81:F1 IKB     Cisco   
+     9 00:26:99:F2:7A:E0 <NA>    Cisco   
+    10 00:23:EB:E3:81:FE IKB     Cisco   
+    11 00:23:EB:E3:81:FD GIVC    Cisco   
+    12 00:26:CB:AA:62:71 IKB     Cisco   
+    13 00:03:7A:1A:18:56 <NA>    TaiyoYud
+    14 00:09:9A:12:55:04 <NA>    Elmo    
+    15 00:23:EB:E3:49:31 <NA>    Cisco   
+    16 00:23:EB:E3:44:31 <NA>    Cisco   
+    17 00:03:7A:1A:03:56 MT_FREE TaiyoYud
+    18 00:26:99:BA:75:8F <NA>    Cisco   
+    19 00:03:7F:12:34:56 MT_FREE AtherosC
+    20 00:26:99:F1:1A:E1 IKB     Cisco   
 
 #### 3. Выявить устройства, использующие последнюю версию протокола шифрования WPA3, и названия точек доступа, реализованных на этих устройствах?
 
@@ -393,51 +376,51 @@ wpa3_aps
 
 ``` r
 wifi_ap_sessions <- wifi_ap_clean %>%
-arrange(bssid, first_seen) %>%
-group_by(bssid) %>%
-mutate(
-gap_min = as.numeric(difftime(first_seen, lag(last_seen), units = "mins")),
-new_session = if_else(is.na(gap_min) | gap_min > 45, 1L, 0L),
-session_id  = cumsum(replace_na(new_session, 0L))
-) %>%
-group_by(bssid, session_id) %>%
-summarise(
-essid       = first(essid),
-company     = first(company),
-first_seen  = min(first_seen, na.rm = TRUE),
-last_seen   = max(last_seen,  na.rm = TRUE),
-beacons     = sum(beacons, na.rm = TRUE),
-speed       = max(speed, na.rm = TRUE),
-mean_power  = mean(power, na.rm = TRUE),
-.groups = "drop"
-) %>%
-mutate(
-duration    = as.numeric(difftime(last_seen, first_seen, units = "secs")),
-beacon_rate = beacons / duration
-)
+  arrange(bssid, first_seen) %>%
+  group_by(bssid) %>%
+  mutate(
+    gap_min     = as.numeric(difftime(first_seen, lag(last_seen), units = "mins")),
+    new_session = if_else(is.na(gap_min) | gap_min > 45, 1L, 0L),
+    session_id  = cumsum(new_session)
+  ) %>%
+  group_by(bssid, session_id) %>%
+  summarise(
+    essid      = first(essid),
+    vendor     = first(vendor),          # <- vendor, не company
+    first_seen = min(first_seen, na.rm = TRUE),
+    last_seen  = max(last_seen,  na.rm = TRUE),
+    beacons    = sum(beacons,    na.rm = TRUE),
+    speed      = max(speed,      na.rm = TRUE),
+    mean_power = mean(power,     na.rm = TRUE),
+    .groups    = "drop"
+  ) %>%
+  mutate(
+    duration = as.numeric(difftime(last_seen, first_seen, units = "secs")),
+    beacon_rate = beacons / duration
+  )
 ```
 
 ``` r
 wifi_ap_sorted_duration <- wifi_ap_sessions %>%
-arrange(desc(duration)) %>%
-select(bssid, essid, company, session_id, duration, first_seen, last_seen)
+  arrange(desc(duration)) %>%
+  select(bssid, essid, vendor, session_id, duration, first_seen, last_seen)
 
 wifi_ap_sorted_duration
 ```
 
     # A tibble: 167 × 7
-       bssid             essid       company session_id duration first_seen         
-       <chr>             <chr>       <chr>        <int>    <dbl> <dttm>             
-     1 00:25:00:FF:94:73 <NA>        Apple,…          1     9795 2023-07-28 09:13:06
-     2 E8:28:C1:DD:04:52 MIREA_HOTS… Eltex …          1     9776 2023-07-28 09:13:09
-     3 E8:28:C1:DC:B2:52 MIREA_HOTS… Eltex …          1     9755 2023-07-28 09:13:03
-     4 08:3A:2F:56:35:FE <NA>        Guangz…          1     9746 2023-07-28 09:13:27
-     5 6E:C7:EC:16:DA:1A Cnet        <NA>             1     9729 2023-07-28 09:13:03
-     6 E8:28:C1:DC:B2:50 MIREA_GUES… Eltex …          1     9726 2023-07-28 09:13:06
-     7 48:5B:39:F9:7A:48 <NA>        ASUSTe…          1     9725 2023-07-28 09:13:06
-     8 E8:28:C1:DC:B2:51 <NA>        Eltex …          1     9725 2023-07-28 09:13:06
-     9 E8:28:C1:DC:FF:F2 <NA>        Eltex …          1     9724 2023-07-28 09:13:06
-    10 8E:55:4A:85:5B:01 Vladimir    <NA>             1     9723 2023-07-28 09:13:06
+       bssid             essid        vendor session_id duration first_seen         
+       <chr>             <chr>        <chr>       <int>    <dbl> <dttm>             
+     1 00:25:00:FF:94:73 <NA>         Apple           1     9795 2023-07-28 09:13:06
+     2 E8:28:C1:DD:04:52 MIREA_HOTSP… <NA>            1     9776 2023-07-28 09:13:09
+     3 E8:28:C1:DC:B2:52 MIREA_HOTSP… <NA>            1     9755 2023-07-28 09:13:03
+     4 08:3A:2F:56:35:FE <NA>         <NA>            1     9746 2023-07-28 09:13:27
+     5 6E:C7:EC:16:DA:1A Cnet         <NA>            1     9729 2023-07-28 09:13:03
+     6 E8:28:C1:DC:B2:50 MIREA_GUESTS <NA>            1     9726 2023-07-28 09:13:06
+     7 48:5B:39:F9:7A:48 <NA>         Asust…          1     9725 2023-07-28 09:13:06
+     8 E8:28:C1:DC:B2:51 <NA>         <NA>            1     9725 2023-07-28 09:13:06
+     9 E8:28:C1:DC:FF:F2 <NA>         <NA>            1     9724 2023-07-28 09:13:06
+    10 8E:55:4A:85:5B:01 Vladimir     <NA>            1     9723 2023-07-28 09:13:06
     # ℹ 157 more rows
     # ℹ 1 more variable: last_seen <dttm>
 
@@ -447,24 +430,24 @@ wifi_ap_sorted_duration
 wifi_ap_sorted_speed <- wifi_ap_sessions %>%
 arrange(desc(speed)) %>%
 slice_head(n = 10) %>%
-select(bssid, essid, company, session_id, speed, first_seen, last_seen)
+select(bssid, essid, vendor, session_id, speed, first_seen, last_seen)
 
 wifi_ap_sorted_speed
 ```
 
     # A tibble: 10 × 7
-       bssid  essid company session_id speed first_seen          last_seen          
-       <chr>  <chr> <chr>        <int> <dbl> <dttm>              <dttm>             
-     1 26:20… <NA>  <NA>             1   866 2023-07-28 09:15:45 2023-07-28 09:33:10
-     2 8E:1F… iPho… <NA>             1   866 2023-07-28 10:08:32 2023-07-28 10:15:27
-     3 96:FF… <NA>  <NA>             1   866 2023-07-28 09:52:54 2023-07-28 10:25:02
-     4 CE:48… iPho… <NA>             1   866 2023-07-28 09:59:20 2023-07-28 10:04:15
-     5 02:B3… HONO… <NA>             1   360 2023-07-28 10:54:47 2023-07-28 10:54:47
-     6 14:EB… Gnez… TP-Lin…          1   360 2023-07-28 09:25:01 2023-07-28 11:53:36
-     7 4A:EC… POCO… <NA>             1   360 2023-07-28 09:13:03 2023-07-28 11:04:01
-     8 56:C5… OneP… <NA>             1   360 2023-07-28 09:17:49 2023-07-28 10:27:22
-     9 9A:75… KC    <NA>             1   360 2023-07-28 09:13:03 2023-07-28 11:53:31
-    10 E8:28… MIRE… Eltex …          1   360 2023-07-28 09:18:16 2023-07-28 11:51:48
+       bssid   essid vendor session_id speed first_seen          last_seen          
+       <chr>   <chr> <chr>       <int> <dbl> <dttm>              <dttm>             
+     1 26:20:… <NA>  <NA>            1   866 2023-07-28 09:15:45 2023-07-28 09:33:10
+     2 8E:1F:… iPho… <NA>            1   866 2023-07-28 10:08:32 2023-07-28 10:15:27
+     3 96:FF:… <NA>  <NA>            1   866 2023-07-28 09:52:54 2023-07-28 10:25:02
+     4 CE:48:… iPho… <NA>            1   866 2023-07-28 09:59:20 2023-07-28 10:04:15
+     5 02:B3:… HONO… <NA>            1   360 2023-07-28 10:54:47 2023-07-28 10:54:47
+     6 14:EB:… Gnez… <NA>            1   360 2023-07-28 09:25:01 2023-07-28 11:53:36
+     7 4A:EC:… POCO… <NA>            1   360 2023-07-28 09:13:03 2023-07-28 11:04:01
+     8 56:C5:… OneP… <NA>            1   360 2023-07-28 09:17:49 2023-07-28 10:27:22
+     9 9A:75:… KC    <NA>            1   360 2023-07-28 09:13:03 2023-07-28 11:53:31
+    10 E8:28:… MIRE… <NA>            1   360 2023-07-28 09:18:16 2023-07-28 11:51:48
 
 #### 6. Отсортировать точки доступа по частоте отправки запросов (beacons) в единицу времени по их убыванию.
 
@@ -472,66 +455,71 @@ wifi_ap_sorted_speed
 wifi_ap_sorted_beacon_rate <- wifi_ap_sessions %>%
 filter(is.finite(beacon_rate)) %>%
 arrange(desc(beacon_rate)) %>%
-select(bssid, essid, company, session_id, beacons, duration, beacon_rate)
+select(bssid, essid, vendor, session_id, beacons, duration, beacon_rate)
 
 wifi_ap_sorted_beacon_rate
 ```
 
     # A tibble: 124 × 7
-       bssid             essid       company session_id beacons duration beacon_rate
-       <chr>             <chr>       <chr>        <int>   <dbl>    <dbl>       <dbl>
-     1 F2:30:AB:E9:03:ED iPhone (Ul… <NA>             1       6        7       0.857
-     2 B2:CF:C0:00:4A:60 Михаил's G… <NA>             1       4        5       0.8  
-     3 3A:DA:00:F9:0C:02 iPhone XS … <NA>             1       5        9       0.556
-     4 00:3E:1A:5D:14:45 MT_FREE     <NA>             1       1        2       0.5  
-     5 02:BC:15:7E:D5:DC MT_FREE     <NA>             1       1        2       0.5  
-     6 76:C5:A0:70:08:96 <NA>        <NA>             1       1        2       0.5  
-     7 D2:25:91:F6:6C:D8 Саня        <NA>             1       5       13       0.385
-     8 BE:F1:71:D6:10:D7 C322U21 05… <NA>             1    1647     9461       0.174
-     9 00:03:7A:1A:03:56 MT_FREE     Taiyo …          1       1        6       0.167
-    10 38:1A:52:0D:84:D7 EBFCD57F-E… Seiko …          1     704     4319       0.163
+       bssid             essid        vendor session_id beacons duration beacon_rate
+       <chr>             <chr>        <chr>       <int>   <dbl>    <dbl>       <dbl>
+     1 F2:30:AB:E9:03:ED iPhone (Uli… <NA>            1       6        7       0.857
+     2 B2:CF:C0:00:4A:60 Михаил's Ga… <NA>            1       4        5       0.8  
+     3 3A:DA:00:F9:0C:02 iPhone XS M… <NA>            1       5        9       0.556
+     4 00:3E:1A:5D:14:45 MT_FREE      <NA>            1       1        2       0.5  
+     5 02:BC:15:7E:D5:DC MT_FREE      <NA>            1       1        2       0.5  
+     6 76:C5:A0:70:08:96 <NA>         <NA>            1       1        2       0.5  
+     7 D2:25:91:F6:6C:D8 Саня         <NA>            1       5       13       0.385
+     8 BE:F1:71:D6:10:D7 C322U21 0566 <NA>            1    1647     9461       0.174
+     9 00:03:7A:1A:03:56 MT_FREE      Taiyo…          1       1        6       0.167
+    10 38:1A:52:0D:84:D7 EBFCD57F-EE… <NA>            1     704     4319       0.163
     # ℹ 114 more rows
 
 #### 1. Определить производителя для каждого обнаруженного устройства
 
-Для этого воспользуемся функцией `get_vendor()`, написанной ранее. Для
-клиентов логичнее определять производителя по `station_mac`:
+Логика аналогичная точкам доступа:
 
 ``` r
 wifi_clients_clean <- wifi_clients_clean %>%
-  mutate(company = vapply(station_mac, get_vendor, character(1)))
-
-wifi_clients_clean
+  mutate(prefix6 = substr(normalize_mac(station_mac), 1, 6)) %>%
+  left_join(manuf_tbl, by = "prefix6")
 ```
 
-    # A tibble: 12,081 × 8
-       station_mac       first_seen          last_seen           power packets bssid
-       <chr>             <dttm>              <dttm>              <dbl>   <dbl> <chr>
-     1 CA:66:3B:8F:56:DD 2023-07-28 09:13:03 2023-07-28 10:59:44   -33     858 BE:F…
-     2 96:35:2D:3D:85:E6 2023-07-28 09:13:03 2023-07-28 09:13:03   -65       4 <NA> 
-     3 5C:3A:45:9E:1A:7B 2023-07-28 09:13:03 2023-07-28 11:51:54   -39     432 BE:F…
-     4 C0:E4:34:D8:E7:E5 2023-07-28 09:13:03 2023-07-28 11:53:16   -61     958 BE:F…
-     5 5E:8E:A6:5E:34:81 2023-07-28 09:13:04 2023-07-28 09:13:04   -53       1 <NA> 
-     6 10:51:07:CB:33:E7 2023-07-28 09:13:05 2023-07-28 11:56:06   -43     344 <NA> 
-     7 68:54:5A:40:35:9E 2023-07-28 09:13:06 2023-07-28 11:50:50   -31     163 1E:9…
-     8 74:4C:A1:70:CE:F7 2023-07-28 09:13:06 2023-07-28 09:20:01   -71       3 E8:2…
-     9 8A:A3:5A:33:76:57 2023-07-28 09:13:06 2023-07-28 10:20:27   -74     115 00:2…
-    10 CA:54:C4:8B:B5:3A 2023-07-28 09:13:06 2023-07-28 11:55:04   -65     437 00:2…
-    # ℹ 12,071 more rows
-    # ℹ 2 more variables: probed_essids <chr>, company <chr>
+``` r
+wifi_clients_clean %>%
+  select(station_mac, vendor, bssid, power, packets) %>%
+  filter(!is.na(vendor))
+```
+
+    # A tibble: 8 × 5
+      station_mac       vendor   bssid             power packets
+      <chr>             <chr>    <chr>             <dbl>   <dbl>
+    1 00:95:69:E7:7F:35 LsdScien <NA>                -69    2245
+    2 00:95:69:E7:7C:ED LsdScien <NA>                -55    4096
+    3 00:95:69:E7:7D:21 LsdScien <NA>                -33    8171
+    4 B8:27:EB:59:FA:0E Raspberr 6E:C7:EC:16:DA:1A    -1     405
+    5 00:90:4C:E6:54:54 Epigram  <NA>                -65      16
+    6 EC:55:F9:A1:4C:6B HonHaiPr 9A:9F:06:44:24:5B    -1       1
+    7 00:04:35:22:4F:75 ComptekI 00:AB:0A:00:10:10   -83      20
+    8 00:0C:E7:A8:D6:73 Mediatek <NA>                -67       3
+
+``` r
+  head(20)
+```
+
+    [1] 20
 
 #### 2. Обнаружить устройства, которые НЕ рандомизируют свой MAC адрес
 
-Нерандомизированный MAC — это глобально назначенный адрес (бит LAA = 0).
+Нерандомизированный MAC - это глобально назначенный адрес (бит LAA = 0).
 Проверяем 2 бита первого октета:
 
-0x01 — multicast (такие пропускаем),
+0x01 - multicast
 
-0x02 — locally administered (если установлен → рандомизация; если нет →
-НЕ рандомизирует).
+0x02 - locally administered (если установлен значит есть рандомизация).
 
 ``` r
-is_laa <- function(mac) {
+is_randomized_mac <- function(mac) {
   mac_hex <- toupper(gsub("[^0-9A-F]", "", mac))
   if (nchar(mac_hex) < 2) return(NA)
   
@@ -540,12 +528,13 @@ is_laa <- function(mac) {
   
   if (bitwAnd(b1, 0x01) != 0) return(NA)
   
-  laa <- bitwAnd(b1, 0x02) != 0
-  return(laa)
+  bitwAnd(b1, 0x02) != 0
 }
+```
 
+``` r
 clients_nr <- wifi_clients_clean %>%
-  mutate(is_randomized = vapply(station_mac, is_laa, logical(1))) %>%
+  mutate(is_randomized = vapply(station_mac, is_randomized_mac, logical(1))) %>%
   filter(is_randomized == FALSE) %>%
   select(station_mac, bssid, first_seen, last_seen, power, packets)
 
@@ -569,72 +558,36 @@ clients_nr
 
 #### Кластеризовать запросы от устройств к точкам доступа по их именам. Определить время появления устройства в зоне радиовидимости и время выхода его из нее
 
-Мы будем обрабатывать данные о точках доступа и клиентских устройствах,
-чтобы определить их взаимодействие и время пребывания в зоне
-радиовидимости.Сначала нормализуем имена сетей и очистим данные
-клиентов, затем сформируем две выборки: устройства, подключённые к
-точкам доступа (assoc), и устройства, отправлявшие запросы на
-подключение (probe). После этого объединим обе выборки и сгруппируем их
-по паре «устройство — сеть», вычислим время первого и последнего
-появления, длительность пребывания и тип связи. В результате получим
-таблицу device_essid_presence, которая покажет, какие устройства и как
-долго находились в зоне действия каждой сети.
+Нормализуем ESSID у точек доступа
 
 ``` r
-ap <- wifi_ap_clean %>%
-  mutate(essid_norm = str_squish(essid))
+ap_essid <- wifi_ap_clean %>%
+  mutate(essid_norm = str_squish(essid)) %>%
+  select(bssid, essid_norm)
+```
 
-ap_unique <- ap %>%
-  filter(!is.na(essid_norm), nzchar(essid_norm)) %>%
-  arrange(essid_norm, bssid) %>%
-  distinct(essid_norm, .keep_all = TRUE)
+Привязываем ESSID к клиентам и группируем
 
-
-cl <- wifi_clients_clean %>%
-  mutate(
-    probed_essids = if_else(is.na(probed_essids), "", probed_essids)
-  )
-assoc <- cl %>%
+``` r
+device_essid_presence <- wifi_clients_clean %>%
   filter(!is.na(bssid)) %>%
-  left_join(
-    ap %>% select(bssid, essid_norm),
-    by = "bssid"
-  ) %>%
-  mutate(link_type = "associated")
-
-probe <- cl %>%
-  filter(is.na(bssid), nzchar(probed_essids)) %>%
-  separate_rows(
-    probed_essids,
-    sep = ",\\s*",
-    convert = FALSE
-  ) %>%
-  mutate(essid_norm = str_squish(probed_essids)) %>%
-  filter(nzchar(essid_norm)) %>%
-  inner_join(
-    ap_unique %>% select(essid_norm, bssid),
-    by = "essid_norm"
-  ) %>%
-  mutate(link_type = "probe")
-
-device_essid_presence <- bind_rows(assoc, probe) %>%
-  filter(!is.na(essid_norm), nzchar(essid_norm)) %>%
-  group_by(station_mac, essid_norm) %>%
+  left_join(ap_essid, by = "bssid") %>%
+  filter(!is.na(essid_norm), essid_norm != "") %>%
+  group_by(station_mac, essid_norm) %>% 
   summarise(
-    first_seen_in = min(first_seen, na.rm = TRUE),
-    last_seen_out = max(last_seen,  na.rm = TRUE),
-    duration_sec  = as.numeric(difftime(last_seen_out, first_seen_in, units = "secs")),
-    n_records     = dplyr::n(),
-    link_types    = paste(sort(unique(link_type)), collapse = "+"),
-    .groups       = "drop"
+    first_seen   = min(first_seen, na.rm = TRUE),
+    last_seen    = max(last_seen,  na.rm = TRUE),
+    duration_sec = as.numeric(difftime(last_seen, first_seen, units = "secs")),
+    n_records    = n(),
+    .groups      = "drop"
   ) %>%
   arrange(desc(duration_sec), station_mac, essid_norm)
 
 device_essid_presence
 ```
 
-    # A tibble: 466 × 7
-       station_mac   essid_norm first_seen_in       last_seen_out       duration_sec
+    # A tibble: 99 × 6
+       station_mac   essid_norm first_seen          last_seen           duration_sec
        <chr>         <chr>      <dttm>              <dttm>                     <dbl>
      1 8C:55:4A:DE:… Galaxy A3… 2023-07-28 09:13:17 2023-07-28 11:56:16         9779
      2 CA:54:C4:8B:… GIVC       2023-07-28 09:13:06 2023-07-28 11:55:04         9718
@@ -646,88 +599,66 @@ device_essid_presence
      8 88:D8:2E:4F:… POCO X5 P… 2023-07-28 09:13:19 2023-07-28 11:51:24         9485
      9 FE:B7:DD:ED:… MIREA_HOT… 2023-07-28 09:13:55 2023-07-28 11:51:47         9472
     10 68:54:5A:40:… Galaxy A71 2023-07-28 09:13:06 2023-07-28 11:50:50         9464
-    # ℹ 456 more rows
-    # ℹ 2 more variables: n_records <int>, link_types <chr>
-
-``` r
-client_clusters <- bind_rows(assoc, probe) %>%
-  filter(!is.na(essid_norm), nzchar(essid_norm)) %>%
-  group_by(station_mac, essid_norm)
-
-stability <- client_clusters %>%
-  summarise(
-    n_obs    = n(),
-    span_m   = as.numeric(
-      max(last_seen, na.rm = TRUE) - min(first_seen, na.rm = TRUE),
-      units = "mins"
-    ),
-    mean_rssi = mean(power, na.rm = TRUE),
-    sd_rssi   = sd(power,   na.rm = TRUE),
-    .groups   = "drop"
-  ) %>%
-  filter(n_obs > 5) %>%
-  arrange(sd_rssi)
-
-most_stable <- dplyr::slice_head(stability, n = 1)
-
-stability
-```
-
-    # A tibble: 0 × 6
-    # ℹ 6 variables: station_mac <chr>, essid_norm <chr>, n_obs <int>,
-    #   span_m <dbl>, mean_rssi <dbl>, sd_rssi <dbl>
-
-``` r
-most_stable
-```
-
-    # A tibble: 0 × 6
-    # ℹ 6 variables: station_mac <chr>, essid_norm <chr>, n_obs <int>,
-    #   span_m <dbl>, mean_rssi <dbl>, sd_rssi <dbl>
+    # ℹ 89 more rows
+    # ℹ 1 more variable: n_records <int>
 
 #### Оценить стабильность уровня сигнала внури кластера во времени. Выявить наиболее стабильный кластер.
 
 Для оценки стабильности уровня сигнала кластер определяется как пара
 (устройство, сеть). Это позволяет анализировать изменение уровня сигнала
 конкретного клиента в пределах конкретной точки доступа. Для каждого
-кластера вычислялись математическое ожидание уровня сигнала и его
-среднеквадратичное отклонение.
+кластера вычислим среднеквадратичное отклонение (т.к. RSSI постоянно
+меняется чем менько отклонение, тем меньше “прыгал” сигнал)
 
 ``` r
-client_clusters <- bind_rows(assoc, probe) %>%
-  filter(!is.na(essid_norm), nzchar(essid_norm)) %>%
+client_clusters <- wifi_clients_clean %>%
+  filter(!is.na(bssid)) %>%
+  left_join(
+    ap_essid,
+    by = "bssid"
+  ) %>%
+  filter(!is.na(essid_norm), essid_norm != "") %>%
   group_by(station_mac, essid_norm)
+```
 
+``` r
 stability <- client_clusters %>%
   summarise(
-    n_obs    = n(),
-    span_m   = as.numeric(
-      max(last_seen, na.rm = TRUE) - min(first_seen, na.rm = TRUE),
-      units = "mins"
-    ),
-    mean_rssi = mean(power, na.rm = TRUE),
+    n_obs = n(),
+    span_m = as.numeric(difftime(max(last_seen), min(first_seen), units = "mins")),
     sd_rssi   = sd(power,   na.rm = TRUE),
     .groups   = "drop"
   ) %>%
-  filter(n_obs > 5) %>% 
   arrange(sd_rssi)
 
-most_stable <- dplyr::slice_head(stability, n = 1)
+most_stable <- slice_head(stability, n = 1)
 
 stability
 ```
 
-    # A tibble: 0 × 6
-    # ℹ 6 variables: station_mac <chr>, essid_norm <chr>, n_obs <int>,
-    #   span_m <dbl>, mean_rssi <dbl>, sd_rssi <dbl>
+    # A tibble: 99 × 5
+       station_mac       essid_norm    n_obs  span_m sd_rssi
+       <chr>             <chr>         <int>   <dbl>   <dbl>
+     1 00:E9:3A:67:93:E9 POCO C40          1  99.9        NA
+     2 00:F4:8D:F7:C5:19 Redmi 12          1  58.4        NA
+     3 02:69:A5:29:F1:3E Galaxy A71        1  32.3        NA
+     4 02:B3:4E:24:2A:00 Димасик           1   0          NA
+     5 04:8C:9A:0B:40:EA MIREA_HOTSPOT     1  88.1        NA
+     6 06:15:2E:12:C8:A6 MIREA_HOTSPOT     1   2.9        NA
+     7 06:7A:BA:E6:9F:FA Vladimir          1  18.1        NA
+     8 06:F2:A9:C1:8D:09 MIREA_HOTSPOT     1 139.         NA
+     9 0A:AB:49:39:BB:29 MIREA_HOTSPOT     1  67.1        NA
+    10 0A:C2:C3:08:9E:F8 MIREA_HOTSPOT     1   0.133      NA
+    # ℹ 89 more rows
 
 ``` r
 most_stable
 ```
 
-    # A tibble: 0 × 6
-    # ℹ 6 variables: station_mac <chr>, essid_norm <chr>, n_obs <int>,
-    #   span_m <dbl>, mean_rssi <dbl>, sd_rssi <dbl>
+    # A tibble: 1 × 5
+      station_mac       essid_norm n_obs span_m sd_rssi
+      <chr>             <chr>      <int>  <dbl>   <dbl>
+    1 00:E9:3A:67:93:E9 POCO C40       1   99.9      NA
 
 ### Шаг 3.
 
